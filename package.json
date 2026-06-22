@@ -1,6 +1,6 @@
 {
   "name": "openclaw-user-cards",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "description": "Lightweight per-speaker user cards for OpenClaw",
   "type": "module",

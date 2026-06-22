@@ -2,7 +2,7 @@
   "id": "user-cards",
   "name": "User Cards",
   "description": "Lightweight per-speaker user cards injected from channel envelopes",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "activation": {
     "onStartup": true
   },
