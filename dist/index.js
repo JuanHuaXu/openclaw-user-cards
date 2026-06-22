@@ -2618,6 +2618,10 @@ function shouldIncludeInternalIds(promptText) {
 function shouldIncludeSourceDetails(promptText) {
     return /\b(?:where|which\s+channel|channel\s+id|source|provenance|from)\b/iu.test(promptText ?? "");
 }
+function hasCrossChannelRecallIntent(promptText) {
+    return /\b(?:global|globally|everywhere)\b|\b(?:all|any|every|across|cross|other)\s+(?:discord\s+)?(?:channels?|chats?|conversations?)\b/iu
+        .test(promptText ?? "");
+}
 function hasRosterInventoryIntent(promptText) {
     const prompt = normalizeLookupText(promptText).replace(/^@+/, "");
     return /\b(?:who\s+(?:are|do)\s+(?:the\s+)?people\s+(?:you\s+)?know|who\s+do\s+you\s+know|list\s+(?:the\s+)?(?:people|speakers|users)|(?:people|speakers|users)\s+(?:you\s+)?know|who\s+is\s+in\s+(?:this\s+)?channel)\b/u
@@ -2808,6 +2812,7 @@ function renderMatchingEvents(params) {
     }
     const currentAuthorOnly = referencedSpeakerIdentities.size === 0 &&
         promptReferencesCurrentAuthor(params.promptText, currentCard, params.cfg);
+    const allowCrossChannelRecall = hasCrossChannelRecallIntent(params.promptText);
     const candidateCards = currentAuthorOnly && currentCard
         ? [currentCard]
         : referencedSpeakerIdentities.size > 0
@@ -2815,7 +2820,9 @@ function renderMatchingEvents(params) {
                 const identity = getSpeakerIdentityKey(card.key);
                 return identity ? referencedSpeakerIdentities.has(identity) : false;
             })
-            : params.cards;
+            : currentChannel && !allowCrossChannelRecall
+                ? params.cards.filter((card) => extractChannelKey(card.key) === currentChannel)
+                : params.cards;
     const eventsByUuid = new Map();
     for (const card of candidateCards) {
         for (const note of providerVisibleNotes(card)) {

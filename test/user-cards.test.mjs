@@ -2380,6 +2380,124 @@ test("infers event where as the source channel when memory came from another cha
   assert.match(rendered, /where: Discord channel other-channel/u);
 });
 
+test("keeps broad event recall scoped to the current channel", () => {
+  const cards = [
+    {
+      key: "discord|channel=chan-1|sender=current",
+      visibleNames: ["Elfiena"],
+      notes: [{
+        event_uuid: "current-leak",
+        event_what: "asked who leaked info",
+        event_when: Date.parse("2026-06-22T22:33:54.249Z"),
+        event_why: [],
+        event_how: "llm:fact",
+      }],
+      firstSeenAt: "2026-06-22T22:00:00.000Z",
+      lastSeenAt: "2026-06-22T22:33:54.249Z",
+      messageCount: 3,
+    },
+    {
+      key: "discord|channel=other-channel|sender=crow",
+      visibleNames: ["Crow"],
+      notes: [{
+        event_uuid: "off-channel-leak",
+        event_what: "It was leaked like a month ago",
+        event_when: Date.parse("2026-06-22T16:26:18.211Z"),
+        event_why: [],
+        event_how: "llm:fact",
+      }],
+      firstSeenAt: "2026-06-22T16:00:00.000Z",
+      lastSeenAt: "2026-06-22T16:26:18.211Z",
+      messageCount: 3,
+    },
+  ];
+  const cfg = {
+    storePath: "./data/user-cards.json",
+    autoLearn: true,
+    inject: true,
+    maxNotes: 12,
+    maxCardChars: 1200,
+    maxRosterNames: 40,
+    maxRecallEvents: 5,
+    includeDisplayName: true,
+    privateAliases: [],
+    passiveDiscordLogTail: { enabled: false },
+    passiveDiscordGateway: { enabled: false },
+    llmSummarization: { enabled: false },
+  };
+
+  const rendered = internals.renderMatchingEvents({
+    cards,
+    currentKey: "discord|channel=chan-1|sender=current",
+    promptText: "Do you remember who leaked info?",
+    cfg,
+    now: Date.parse("2026-06-22T22:34:00.000Z"),
+  });
+
+  assert.match(rendered, /asked who leaked info/u);
+  assert.doesNotMatch(rendered, /Crow/u);
+  assert.doesNotMatch(rendered, /another Discord channel/u);
+});
+
+test("allows explicit cross-channel event recall", () => {
+  const cards = [
+    {
+      key: "discord|channel=chan-1|sender=current",
+      visibleNames: ["Elfiena"],
+      notes: [{
+        event_uuid: "current-leak",
+        event_what: "asked who leaked info",
+        event_when: Date.parse("2026-06-22T22:33:54.249Z"),
+        event_why: [],
+        event_how: "llm:fact",
+      }],
+      firstSeenAt: "2026-06-22T22:00:00.000Z",
+      lastSeenAt: "2026-06-22T22:33:54.249Z",
+      messageCount: 3,
+    },
+    {
+      key: "discord|channel=other-channel|sender=crow",
+      visibleNames: ["Crow"],
+      notes: [{
+        event_uuid: "off-channel-leak",
+        event_what: "It was leaked like a month ago",
+        event_when: Date.parse("2026-06-22T16:26:18.211Z"),
+        event_why: [],
+        event_how: "llm:fact",
+      }],
+      firstSeenAt: "2026-06-22T16:00:00.000Z",
+      lastSeenAt: "2026-06-22T16:26:18.211Z",
+      messageCount: 3,
+    },
+  ];
+  const cfg = {
+    storePath: "./data/user-cards.json",
+    autoLearn: true,
+    inject: true,
+    maxNotes: 12,
+    maxCardChars: 1200,
+    maxRosterNames: 40,
+    maxRecallEvents: 5,
+    includeDisplayName: true,
+    privateAliases: [],
+    passiveDiscordLogTail: { enabled: false },
+    passiveDiscordGateway: { enabled: false },
+    llmSummarization: { enabled: false },
+  };
+
+  const rendered = internals.renderMatchingEvents({
+    cards,
+    currentKey: "discord|channel=chan-1|sender=current",
+    promptText: "Do you remember who leaked info across Discord channels?",
+    cfg,
+    now: Date.parse("2026-06-22T22:34:00.000Z"),
+  });
+
+  assert.match(rendered, /Crow/u);
+  assert.match(rendered, /It was leaked like a month ago/u);
+  assert.match(rendered, /where: another Discord channel/u);
+});
+
 test("infers iMessage event where as chat context", () => {
   const cards = [{
     key: "imessage|channel=imessage:+15551234567|sender=+15551234567",
