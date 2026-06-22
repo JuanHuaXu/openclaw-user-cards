@@ -1,0 +1,32 @@
+{
+  "name": "openclaw-user-cards",
+  "version": "0.1.1",
+  "license": "MIT",
+  "description": "Lightweight per-speaker user cards for OpenClaw",
+  "type": "module",
+  "main": "dist/index.js",
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "runtimeExtensions": [
+      "./dist/index.js"
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "openclaw": "file:../openclaw",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@connectrpc/connect": "^1.7.0",
+    "@connectrpc/connect-node": "^1.7.0",
+    "@xdarkicex/libravdb-contracts": "^2.0.20"
+  },
+  "overrides": {
+    "undici": "6.24.1"
+  }
+}

@@ -1,0 +1,314 @@
+{
+  "id": "user-cards",
+  "name": "User Cards",
+  "description": "Lightweight per-speaker user cards injected from channel envelopes",
+  "version": "0.1.1",
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "storePath": {
+        "type": "string",
+        "description": "Legacy plugin-relative JSON import path.",
+        "default": "./data/user-cards.json"
+      },
+      "databasePath": {
+        "type": "string",
+        "description": "Plugin-relative SQLite database path used as the source of truth.",
+        "default": "./data/user-cards.sqlite"
+      },
+      "autoLearn": {
+        "type": "boolean",
+        "description": "Capture small preference/project notes from inbound messages.",
+        "default": true
+      },
+      "inject": {
+        "type": "boolean",
+        "description": "Inject the current speaker card during prompt build.",
+        "default": true
+      },
+      "maxNotes": {
+        "type": "number",
+        "description": "Maximum notes retained per speaker.",
+        "default": 12,
+        "minimum": 1,
+        "maximum": 40
+      },
+      "maxCardChars": {
+        "type": "number",
+        "description": "Maximum injected card size in characters.",
+        "default": 1200,
+        "minimum": 200,
+        "maximum": 4000
+      },
+      "maxRosterNames": {
+        "type": "number",
+        "description": "Maximum same-channel visible names injected as a lightweight roster.",
+        "default": 40,
+        "minimum": 0,
+        "maximum": 100
+      },
+      "maxRecallEvents": {
+        "type": "number",
+        "description": "Maximum matching event packets injected for direct memory queries.",
+        "default": 5,
+        "minimum": 0,
+        "maximum": 5
+      },
+      "includeDisplayName": {
+        "type": "boolean",
+        "description": "Include channel-visible display names in injected cards.",
+        "default": true
+      },
+      "privateAliases": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Names or aliases that may be stored locally but must never be injected.",
+        "default": [],
+        "maxItems": 100
+      },
+      "passiveDiscordLogTail": {
+        "type": "object",
+        "description": "Local debug-log tailer that hydrates Discord message authors before mention-gated drops.",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "logPath": {
+            "type": "string",
+            "default": "/tmp/openclaw/openclaw.log"
+          },
+          "openclawConfigPath": {
+            "type": "string",
+            "default": "~/.openclaw/openclaw.json"
+          },
+          "pollMs": {
+            "type": "number",
+            "default": 1500,
+            "minimum": 250,
+            "maximum": 60000
+          }
+        },
+        "additionalProperties": false
+      },
+      "passiveDiscordGateway": {
+        "type": "object",
+        "description": "Local Discord gateway tap that captures author id/display name without turning passive chatter into agent turns.",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "openclawConfigPath": {
+            "type": "string",
+            "default": "~/.openclaw/openclaw.json"
+          },
+          "captureMessages": {
+            "type": "boolean",
+            "description": "Store sanitized recent message snippets from the passive tap. Requires Discord Message Content intent for most guild messages.",
+            "default": false
+          },
+          "captureGuildMembers": {
+            "type": "boolean",
+            "description": "Request Discord's privileged guild-member intent and store member-list identity packets when available.",
+            "default": false
+          },
+          "maxCapturedMessages": {
+            "type": "number",
+            "description": "Maximum passive message snippets retained per speaker card.",
+            "default": 20,
+            "minimum": 0,
+            "maximum": 200
+          },
+          "maxMessageChars": {
+            "type": "number",
+            "description": "Maximum characters retained per passive message snippet.",
+            "default": 500,
+            "minimum": 80,
+            "maximum": 2000
+          }
+        },
+        "additionalProperties": false
+      },
+      "passiveIMessageWatch": {
+        "type": "object",
+        "description": "Local read-only imsg watch tap that captures iMessage/SMS speakers without turning passive chatter into agent turns.",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "commandPath": {
+            "type": "string",
+            "description": "Path to the imsg executable.",
+            "default": "imsg"
+          },
+          "captureMessages": {
+            "type": "boolean",
+            "description": "Store sanitized recent message snippets from imsg watch --json.",
+            "default": false
+          },
+          "includeSelfMessages": {
+            "type": "boolean",
+            "description": "Capture messages marked is_from_me by imsg. Disabled by default.",
+            "default": false
+          },
+          "maxCapturedMessages": {
+            "type": "number",
+            "description": "Maximum passive iMessage snippets retained per speaker card.",
+            "default": 20,
+            "minimum": 0,
+            "maximum": 200
+          },
+          "maxMessageChars": {
+            "type": "number",
+            "description": "Maximum characters retained per passive iMessage snippet.",
+            "default": 500,
+            "minimum": 80,
+            "maximum": 2000
+          }
+        },
+        "additionalProperties": false
+      },
+      "llmSummarization": {
+        "type": "object",
+        "description": "Optional local Ollama fallback summarizer that converts messages into bounded event-note packets.",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Ollama-compatible endpoint used only for user-card note extraction.",
+            "default": "http://127.0.0.1:11434"
+          },
+          "model": {
+            "type": "string",
+            "default": "qwen3.6:35b-a3b-mtp-q8_0"
+          },
+          "timeoutMs": {
+            "type": "number",
+            "default": 2500,
+            "minimum": 250,
+            "maximum": 30000
+          },
+          "maxInputChars": {
+            "type": "number",
+            "default": 1500,
+            "minimum": 200,
+            "maximum": 6000
+          },
+          "maxNotesPerMessage": {
+            "type": "number",
+            "default": 3,
+            "minimum": 1,
+            "maximum": 8
+          },
+          "numCtx": {
+            "type": "number",
+            "description": "Optional Ollama options.num_ctx override for the fallback summarizer. Leave unset so this background path does not resize the active chat model.",
+            "minimum": 512,
+            "maximum": 1048576
+          },
+          "keepAlive": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean",
+                "const": false
+              }
+            ],
+            "description": "Optional Ollama keep_alive override for the fallback summarizer. Leave unset, or set false to omit keep_alive."
+          },
+          "fallbackToPatterns": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "daemonSummarization": {
+        "type": "object",
+        "description": "Optional LibraVDB daemon summarizer used before the LLM fallback for background note extraction.",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "endpoint": {
+            "type": "string",
+            "default": "auto"
+          },
+          "timeoutMs": {
+            "type": "number",
+            "default": 30000,
+            "minimum": 250,
+            "maximum": 120000
+          },
+          "maxOutputTokens": {
+            "type": "number",
+            "default": 96,
+            "minimum": 16,
+            "maximum": 512
+          }
+        },
+        "additionalProperties": false
+      },
+      "libravdbProjection": {
+        "type": "object",
+        "description": "Optional async projection of passive captured messages into LibraVDB memory.",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "endpoint": {
+            "type": "string",
+            "default": "auto"
+          },
+          "tenantKey": {
+            "type": "string",
+            "description": "LibraVDB tenant/user key to project passive captured messages into."
+          },
+          "pushCapturedMessages": {
+            "type": "boolean",
+            "description": "Project passive captured messages that were not addressed to the OpenClaw agent.",
+            "default": true
+          },
+          "timeoutMs": {
+            "type": "number",
+            "default": 30000,
+            "minimum": 250,
+            "maximum": 120000
+          },
+          "retryDelayMs": {
+            "type": "number",
+            "default": 300000,
+            "minimum": 1000,
+            "maximum": 3600000
+          },
+          "maxAttempts": {
+            "type": "number",
+            "default": 6,
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  },
+  "contracts": {}
+}
